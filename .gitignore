@@ -1,3 +1,16 @@
+# filter sensitive data
+BSP
+doc
+encode
+example
+kernel
+netprot
+oceaninterface
+peripheral
+platform
+projects
+
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

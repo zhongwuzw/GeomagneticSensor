@@ -24,18 +24,15 @@
 
 #include "stm32l4xx_hal.h"
 
-#define  SHT20_ADDRESS		0x80
+#define  SHT20_WRITE_ADDRESS		0x3C
+#define	 SHT20_READ_ADDRESS			0x3D
 extern uint16_t  POLYNOMIAL ;
 
 typedef enum
 {
-	M_SHT20_READ_T    = 0xE3 ,
-  M_SHT20_READ_RH   = 0xE5 ,
-  N_SHT20_READ_T    = 0xF3 ,
-  N_SHT20_READ_RH   = 0xF5 ,
-  SHT20_REG_WRITE   = 0xE6 ,
-  SHT20_REG_READ    = 0xE7 ,
-  SHT20_SOFT_REST   = 0xFE
+  SHT20_REG_CRA   = 0x00 ,
+  SHT20_REG_CRB    = 0x01 ,
+  SHT20_REG_MODE   = 0x02
 } SHT20_Command;
 
 typedef enum

@@ -111,31 +111,10 @@ void SHT20_rest(void)
   if(status != HAL_OK) {
 		char log[128];
 				memset(log,0,sizeof(log));
-		snprintf(log, sizeof(log), "rest is not ok\n",status);
+		snprintf(log, sizeof(log), "rest is not ok,%d\n",status);
 		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);	
 	}
 }
-
-
-float SHT20_humidityRH_cal(uint16_t dat)
-{
-  float humidityRH;
-  dat &= ~0x0003;
-
-  humidityRH = -6.0 + 125.0/65536 * (float)dat;
-  return humidityRH;
-}
-
-float SHT20_temperatureC_cal(uint16_t dat)
-{
-  float temperatureC;
-  dat &= ~0x0003;
-  temperatureC= -46.85 + 175.72/65536 *(float)dat;
-  return temperatureC;
-}
-
-extern double TemRet;
-extern double HumRet;
 
 void SHT20_test(void)
 {

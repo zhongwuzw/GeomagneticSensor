@@ -435,6 +435,7 @@ int main(void)
 	debug_thread.pthread = (os_pthread)FT_UART_Send;                   //串口测试函数，debug_thread线程执行该函数
 	//debug_thread.pthread = (os_pthread)encodetest;                   //串口测试函数，debug_thread线程执行该函数
 	osThreadCreate(&debug_thread, NULL);*/
+	/*
 	ultra_thread.name = "Test_ULTRA";
 	ultra_thread.stacksize = 2048;
 	ultra_thread.tpriority = osPriorityLow;
@@ -446,8 +447,8 @@ int main(void)
 	nbiot_thread.tpriority = osPriorityLow;
 	nbiot_thread.pthread = (os_pthread)NB_TEST_Uart_once;                   //NB-IoT测试函数，nbiot_thread线程执行该函数
 	osThreadCreate(&nbiot_thread, NULL);
-  
-	// thsensor_thread.name = "TH_Sensor";
+  */
+	thsensor_thread.name = "TH_Sensor";
 	thsensor_thread.stacksize = 2048;
 	thsensor_thread.tpriority = osPriorityLow;
 	thsensor_thread.pthread = (os_pthread)SHT20_test;                  //温湿度测试函数

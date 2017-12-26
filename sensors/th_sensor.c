@@ -8,7 +8,7 @@
 uint16_t  POLYNOMIAL = 0x131;
 I2C_HandleTypeDef th_iic;
 
-typedef uint8_t BYTE;
+typedef uint16_t BYTE;
 BYTE BUF[8];
 
 void _IIC_Error_Handler(char *File, int Line)

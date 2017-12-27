@@ -24,10 +24,17 @@ THE SOFTWARE.
 
 /* Includes */
 #include "mpu_sensor.h"
+#include "uart_test.h"
 #include "delay.h"
 
-#define IIC_SDA GPIO_PIN_14
-#define IIC_SCL GPIO_PIN_13
+//#define IIC_SDA GPIO_PIN_14
+//#define IIC_SCL GPIO_PIN_13
+
+#define IIC_SDA GPIO_PIN_9
+#define IIC_SCL GPIO_PIN_8
+
+typedef uint8_t BYTE;
+BYTE HMC_BUF[8];
 
 /** @defgroup MPU6050_Library
 * @{
@@ -46,6 +53,27 @@ void MPU6050_Initialize()
     MPU6050_SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
     MPU6050_SetFullScaleAccelRange(MPU6050_ACCEL_FS_2);
     MPU6050_SetSleepModeStatus(DISABLE); 
+}
+
+void HMC5983_Initialize()
+{
+	uint8_t tmp = 0x70;
+	uint8_t status = MPU6050_I2C_ByteWrite(0x1E, &tmp, 0x00);
+	
+				char log[28];
+	  memset(log,0,sizeof(log));
+		snprintf(log, sizeof(log), "write status is %d\n",status);
+		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+	
+	osDelay(100);
+	
+	uint8_t tmp1 = 0xA0;
+	MPU6050_I2C_ByteWrite(0x1E, &tmp1, 0x01);
+	osDelay(100);
+	
+	uint8_t tmp2 = 0x00;
+	MPU6050_I2C_ByteWrite(0x1E, &tmp2, 0x02);
+	osDelay(100);
 }
 
 /** Verify the I2C connection.
@@ -317,13 +345,13 @@ void MPU6050_I2C_Init()
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13|GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PB14 PB7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14;
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  //GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 	
   HAL_GPIO_WritePin(GPIOB, IIC_SCL, GPIO_PIN_SET);
@@ -505,8 +533,25 @@ void MPU6050_test()
 	short temp;
 	MPU6050_I2C_Init();
 	osDelay(100);
-	MPU6050_Initialize();
-	MPU6050_TestConnection();
+	HMC5983_Initialize();
+	
+	uint8_t value1 = 0;
+	uint8_t status = MPU6050_I2C_BufferRead(0x1E, &value1, 0x00, 1);
+	
+			char log[128];
+	  memset(log,0,sizeof(log));
+		snprintf(log, sizeof(log), "read status is %d\n",status);
+		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+		
+		osDelay(1000);
+	
+	//MPU6050_ReadBits(0x3D, 0x00, 0, 8, &value1);
+		uint8_t value2 = 0;
+	MPU6050_ReadBits(0x1E, 0x01, 0, 8, &value2);
+			uint8_t value3 = 0;
+	MPU6050_ReadBits(0x1E, 0x02, 0, 8, &value3);
+	
+	//MPU6050_TestConnection();
 	//MPU6050_Initialize();
 	
 	sTmp = 0;
@@ -514,8 +559,49 @@ void MPU6050_test()
 	while(1)
 	{
 		osDelay(100);
-		//mpu_get_acceler_value(&aacx,&aacy,&aacz);
-		MPU6050_GetRawAccelGyro(&sTmp);
+		//mpu_get_acceler_value(&aacx,&aacy,&aacz)
+		
+		uint8_t value_read_x_max = 0;
+		MPU6050_I2C_BufferRead(0x1E, &value_read_x_max, 0x03, 1);
+	//	MPU6050_ReadBits(0x3D, 0x03, 0, 8, &value_read_x_max);
+		uint8_t value_read_x_min = 0;
+		MPU6050_I2C_BufferRead(0x1E, &value_read_x_min, 0x04, 1);
+		
+		uint8_t value_read_y_max = 0;
+		MPU6050_I2C_BufferRead(0x1E, &value_read_y_max, 0x07, 1);
+	//	MPU6050_ReadBits(0x3D, 0x03, 0, 8, &value_read_x_max);
+		uint8_t value_read_y_min = 0;
+		MPU6050_I2C_BufferRead(0x1E, &value_read_y_min, 0x08, 1);
+		
+	 uint8_t value_read_z_max = 0;
+		MPU6050_I2C_BufferRead(0x1E, &value_read_z_max, 0x05, 1);
+	//	MPU6050_ReadBits(0x3D, 0x03, 0, 8, &value_read_x_max);
+		uint8_t value_read_z_min = 0;
+		MPU6050_I2C_BufferRead(0x1E, &value_read_z_min, 0x06, 1);
+		
+		//MPU6050_I2C_BufferRead(0x1E, HMC_BUF, 0x06, 6);
+		//MPU6050_ReadBits(0x3D, 0x04, 0, 8, &value_read_x_min);
+		/*
+		int i = 0;
+		for (i = 0; i < 2; i++)
+		{
+				HMC_BUF[i] = value_read[i];
+		}
+		*/
+		
+		//short x = HMC_BUF[0] << 8 | HMC_BUF[1];
+		short x = value_read_x_max << 8 | value_read_x_min;
+		short y = value_read_y_max << 8 | value_read_y_min;
+		short z = value_read_z_max << 8 | value_read_z_min;
+	//	short y = HMC_BUF[2] << 8 | HMC_BUF[3];
+	//	short z = HMC_BUF[4] << 8 | HMC_BUF[5];
+		
+		char log[128];
+	  memset(log,0,sizeof(log));
+		snprintf(log, sizeof(log), "x is %d,y is %d,z is %d\n",x,y,z);
+		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+		
+		MPU6050_WriteBits(0x1E, 0x03, 0, 0, 0x00);
 		osDelay(1000);
 	}
 }

@@ -27,9 +27,6 @@ THE SOFTWARE.
 #include "uart_test.h"
 #include "delay.h"
 
-//#define IIC_SDA GPIO_PIN_14
-//#define IIC_SCL GPIO_PIN_13
-
 #define IIC_SDA GPIO_PIN_9
 #define IIC_SCL GPIO_PIN_8
 
@@ -57,22 +54,19 @@ void MPU6050_Initialize()
 
 void HMC5983_Initialize()
 {
-	uint8_t tmp = 0x70;
-	uint8_t status = MPU6050_I2C_ByteWrite(0x1E, &tmp, 0x00);
-	
-				char log[28];
-	  memset(log,0,sizeof(log));
-		snprintf(log, sizeof(log), "write status is %d\n",status);
-		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
-	
+	// 8-average, 15Hz default, normal measurement
+	uint8_t option_for_0 = 0x70;
+	uint8_t status = MPU6050_I2C_ByteWrite(0x1E, &option_for_0, 0x00);
 	osDelay(100);
 	
-	uint8_t tmp1 = 0xA0;
-	MPU6050_I2C_ByteWrite(0x1E, &tmp1, 0x01);
+	// Gain = 5
+	uint8_t option_for_1 = 0xA0;
+	MPU6050_I2C_ByteWrite(0x1E, &option_for_1, 0x01);
 	osDelay(100);
 	
-	uint8_t tmp2 = 0x00;
-	MPU6050_I2C_ByteWrite(0x1E, &tmp2, 0x02);
+	// Continuous-measurement mode
+	uint8_t option_for_2 = 0x00;
+	MPU6050_I2C_ByteWrite(0x1E, &option_for_2, 0x02);
 	osDelay(100);
 }
 
@@ -535,73 +529,38 @@ void MPU6050_test()
 	osDelay(100);
 	HMC5983_Initialize();
 	
-	uint8_t value1 = 0;
-	uint8_t status = MPU6050_I2C_BufferRead(0x1E, &value1, 0x00, 1);
-	
-			char log[128];
-	  memset(log,0,sizeof(log));
-		snprintf(log, sizeof(log), "read status is %d\n",status);
-		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
-		
-		osDelay(1000);
-	
-	//MPU6050_ReadBits(0x3D, 0x00, 0, 8, &value1);
-		uint8_t value2 = 0;
-	MPU6050_ReadBits(0x1E, 0x01, 0, 8, &value2);
-			uint8_t value3 = 0;
-	MPU6050_ReadBits(0x1E, 0x02, 0, 8, &value3);
-	
-	//MPU6050_TestConnection();
-	//MPU6050_Initialize();
-	
-	sTmp = 0;
-	
 	while(1)
 	{
 		osDelay(100);
-		//mpu_get_acceler_value(&aacx,&aacy,&aacz)
 		
-		uint8_t value_read_x_max = 0;
-		MPU6050_I2C_BufferRead(0x1E, &value_read_x_max, 0x03, 1);
-	//	MPU6050_ReadBits(0x3D, 0x03, 0, 8, &value_read_x_max);
-		uint8_t value_read_x_min = 0;
-		MPU6050_I2C_BufferRead(0x1E, &value_read_x_min, 0x04, 1);
+		// read x,y,z from register
+		uint8_t x_msb = 0;
+		MPU6050_I2C_BufferRead(0x1E, &x_msb, 0x03, 1);
+		uint8_t x_lsb = 0;
+		MPU6050_I2C_BufferRead(0x1E, &x_lsb, 0x04, 1);
 		
-		uint8_t value_read_y_max = 0;
-		MPU6050_I2C_BufferRead(0x1E, &value_read_y_max, 0x07, 1);
-	//	MPU6050_ReadBits(0x3D, 0x03, 0, 8, &value_read_x_max);
-		uint8_t value_read_y_min = 0;
-		MPU6050_I2C_BufferRead(0x1E, &value_read_y_min, 0x08, 1);
+		uint8_t y_msb = 0;
+		MPU6050_I2C_BufferRead(0x1E, &y_msb, 0x07, 1);
+		uint8_t y_lsb = 0;
+		MPU6050_I2C_BufferRead(0x1E, &y_lsb, 0x08, 1);
 		
-	 uint8_t value_read_z_max = 0;
-		MPU6050_I2C_BufferRead(0x1E, &value_read_z_max, 0x05, 1);
-	//	MPU6050_ReadBits(0x3D, 0x03, 0, 8, &value_read_x_max);
-		uint8_t value_read_z_min = 0;
-		MPU6050_I2C_BufferRead(0x1E, &value_read_z_min, 0x06, 1);
-		
-		//MPU6050_I2C_BufferRead(0x1E, HMC_BUF, 0x06, 6);
-		//MPU6050_ReadBits(0x3D, 0x04, 0, 8, &value_read_x_min);
-		/*
-		int i = 0;
-		for (i = 0; i < 2; i++)
-		{
-				HMC_BUF[i] = value_read[i];
-		}
-		*/
-		
-		//short x = HMC_BUF[0] << 8 | HMC_BUF[1];
-		short x = value_read_x_max << 8 | value_read_x_min;
-		short y = value_read_y_max << 8 | value_read_y_min;
-		short z = value_read_z_max << 8 | value_read_z_min;
-	//	short y = HMC_BUF[2] << 8 | HMC_BUF[3];
-	//	short z = HMC_BUF[4] << 8 | HMC_BUF[5];
+	  uint8_t z_msb = 0;
+		MPU6050_I2C_BufferRead(0x1E, &z_msb, 0x05, 1);
+		uint8_t z_lsb = 0;
+		MPU6050_I2C_BufferRead(0x1E, &z_lsb, 0x06, 1);
+
+		short x = x_msb << 8 | x_lsb;
+		short y = y_msb << 8 | y_lsb;
+		short z = z_msb << 8 | z_lsb;
 		
 		char log[128];
 	  memset(log,0,sizeof(log));
 		snprintf(log, sizeof(log), "x is %d,y is %d,z is %d\n",x,y,z);
 		los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
 		
-		MPU6050_WriteBits(0x1E, 0x03, 0, 0, 0x00);
+		// reset register to 0x03
+		uint8_t rebaseRegisterAddr = 0x00;
+		MPU6050_I2C_ByteWrite(0x1E, &rebaseRegisterAddr, 0x03);
 		osDelay(1000);
 	}
 }

@@ -34,6 +34,57 @@ extern "C" {
 #include "cmsis_os.h"
 #include <stdbool.h>
 
+/*
+ *  DEVICE ADDRESS
+ */
+#define MEMSIC35240PJ_ADDRESS   0x60
+
+/*
+ *  REGISTER ADDRESS
+ */
+#define XOUT_LOW                0x00
+#define XOUT_HIGH               0x01
+#define YOUT_LOW                0x02
+#define YOUT_HIGH               0x03
+#define ZOUT_LOW                0x04
+#define ZOUT_HIGH               0x05
+#define MMC_STATUS              0x06
+#define INTERNAL_CONTROL0       0x07
+#define INTERNAL_CONTROL1       0x08
+#define PRODUCTID0              0x10
+#define PRODUCTID1              0x20
+
+#define OUT_DATA_MODE_16_0      0x00
+#define OUT_DATA_MODE_16_1      0x01
+#define OUT_DATA_MODE_14        0x02
+#define OUT_DATA_MODE_12        0x03
+
+extern uint8_t TAKE_MEASUREMENT;
+extern uint8_t MMC_RESET;
+extern uint8_t MMC_SET;
+extern uint8_t TWICERESET;
+
+typedef struct
+{
+    uint32_t x;
+    uint32_t y;
+    uint32_t z;
+} MEMSIC35240PJ_DATA;
+
+typedef struct
+{
+    uint32_t setx;
+    uint32_t sety;
+    uint32_t setz;
+} MEMSIC35240PJ_SETDATA;
+
+typedef struct
+{
+    uint32_t resetx;
+    uint32_t resety;
+    uint32_t resetz;
+} MEMSIC35240PJ_RESETDATA;
+
 #define TRUE 1
 #define FALSE 0
 

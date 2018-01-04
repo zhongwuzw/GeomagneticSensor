@@ -27,6 +27,7 @@
 #include "th_sensor.h"
 #include "gpio_handle.h"
 #include "mpu_sensor.h"
+#include "mmc_3260_sensor.h"
 #include "delay.h"
 
 
@@ -388,6 +389,7 @@ int main(void)
 	osThreadDef_t mpu_thread;
 	osThreadDef_t bmp_thread;
 	osThreadDef_t ultra_thread;
+	osThreadDef_t mmc_3260_thread;
 
 	
 	UINT32 iRet;
@@ -467,15 +469,21 @@ int main(void)
 	ultra_thread.tpriority = osPriorityLow;
 	ultra_thread.pthread = (os_pthread)ultra_test;                         //LED灯闪烁函数
 	osThreadCreate(&ultra_thread, NULL);
-
 	*/
-	
+	/*
 	mpu_thread.name = "Test_MPU6050";
 	mpu_thread.stacksize = 2048;
 	mpu_thread.tpriority = osPriorityLow;
 	mpu_thread.pthread = (os_pthread)MPU6050_test;                     //六轴传感器函数
 	osThreadCreate(&mpu_thread, NULL);
+	*/
 	
+
+	mmc_3260_thread.name = "MMC_3260";
+	mmc_3260_thread.stacksize = 2048;
+	mmc_3260_thread.tpriority = osPriorityLow;
+	mmc_3260_thread.pthread = (os_pthread)Mmc3316xmt_Sensor;                     //六轴传感器函数
+	osThreadCreate(&mmc_3260_thread, NULL);
 
   /* Kernel start to run */
   LOS_Start();

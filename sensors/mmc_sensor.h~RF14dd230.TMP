@@ -22,21 +22,69 @@ THE SOFTWARE.
 ================================================================================================
 */
 
+/*
+ *  DEVICE ADDRESS
+ */
+#define MEMSIC35240PJ_ADDRESS   0x60
+
+/*
+ *  REGISTER ADDRESS
+ */
+#define XOUT_LOW                0x00
+#define XOUT_HIGH               0x01
+#define YOUT_LOW                0x02
+#define YOUT_HIGH               0x03
+#define ZOUT_LOW                0x04
+#define ZOUT_HIGH               0x05 
+#define MMC_STATUS              0x06
+#define INTERNAL_CONTROL0       0x07
+#define INTERNAL_CONTROL1       0x08
+#define PRODUCTID0              0x10
+#define PRODUCTID1              0x20  
+
+#define OUT_DATA_MODE_16_0      0x00
+#define OUT_DATA_MODE_16_1      0x01
+#define OUT_DATA_MODE_14        0x02
+#define OUT_DATA_MODE_12        0x03
+   
+extern uint8_t TAKE_MEASUREMENT;
+extern uint8_t MMC_RESET;
+extern uint8_t MMC_SET;
+extern uint8_t TWICERESET;
+
+typedef struct {
+    uint32_t x;
+    uint32_t y;
+    uint32_t z;
+} MEMSIC35240PJ_DATA;
+    
+typedef struct {
+    uint32_t setx;
+    uint32_t sety;
+    uint32_t setz;
+} MEMSIC35240PJ_SETDATA;
+
+typedef struct {
+    uint32_t resetx;
+    uint32_t resety;
+    uint32_t resetz;
+} MEMSIC35240PJ_RESETDATA;
+
 #ifndef _MPU6050_H_
 #define _MPU6050_H_
 
 #ifdef __cplusplus
-extern "C" {
-#endif
+ extern "C" {
+#endif 
 
-/* Includes */
-#include "stm32l4xx.h"
+ /* Includes */
+#include "stm32l4xx.h" 
 #include "cmsis_os.h"
 #include <stdbool.h>
-
+	 
 #define TRUE 1
 #define FALSE 0
-
+	 
 #define IIC_SDA_IN()  {GPIOB->MODER&=~(3<<(14*2));GPIOB->MODER|=0<<14*2;}
 #define IIC_SDA_OUT() {GPIOB->MODER&=~(3<<(14*2));GPIOB->MODER|=1<<14*2;}
 
@@ -413,11 +461,11 @@ void MPU6050_SetClockSource(uint8_t source);
 // WHO_AM_I register
 uint8_t MPU6050_GetDeviceID();
 
-void MPU6050_GetRawAccelGyro(short *AccelGyro);
+void MPU6050_GetRawAccelGyro(short* AccelGyro);
 
 void MPU6050_WriteBits(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
 void MPU6050_WriteBit(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-void MPU6050_ReadBits(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+void MPU6050_ReadBits(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data); 
 void MPU6050_ReadBit(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
 
 void MPU6050_I2C_Init();
@@ -431,17 +479,17 @@ uint8_t MPU6050_I2C_ByteRead(uint8_t ack);
 
 //uint8_t MPU6050_WriteByte(uint8_t slaveAddr, uint8_t *write_data, uint8_t reg);
 uint8_t MPU6050_WriteBuff(uint8_t addr, uint8_t reg, uint8_t write_len, uint8_t *write_buff);
-uint8_t MPU6050_ReadBuff(uint8_t slaveAddr, uint8_t *pBuffer, uint8_t readAddr , uint8_t NumByteToRead);
+uint8_t MPU6050_ReadBuff(uint8_t slaveAddr, uint8_t *pBuffer, uint8_t readAddr ,uint8_t NumByteToRead);
 uint8_t MPU6050_WriteByte(uint8_t slaveAddr, uint8_t *write_data, uint8_t reg);
 
-uint8_t MPU6050_I2C_ByteWrite(uint8_t slaveAddr, uint8_t *pBuffer, uint8_t writeAddr);
-uint8_t MPU6050_I2C_BufferRead(uint8_t slaveAddr, uint8_t *pBuffer, uint8_t readAddr, uint16_t NumByteToRead);
+uint8_t MPU6050_I2C_ByteWrite(uint8_t slaveAddr, uint8_t* pBuffer, uint8_t writeAddr);
+uint8_t MPU6050_I2C_BufferRead(uint8_t slaveAddr, uint8_t* pBuffer, uint8_t readAddr, uint16_t NumByteToRead);
 uint8_t MPU6050_ReadByte(uint8_t reg);
 void MPU6050_test();
 
 #ifdef __cplusplus
-extern "C" {
-#endif
+ extern "C" {
+#endif 
 
 #endif /* __MPU6050_H */
-    /******************* (C) COPYRIGHT 2012 Harinadha Reddy Chintalapalli *****END OF FILE****/
+/******************* (C) COPYRIGHT 2012 Harinadha Reddy Chintalapalli *****END OF FILE****/

@@ -57,6 +57,21 @@ void th_iic_Init(void)
         _IIC_Error_Handler(__FILE__, __LINE__);
     }
 
+    if (HAL_I2C_IsDeviceReady(&th_iic, 0x60, 1000, 1000) != HAL_OK)
+    {
+        char log1[128];
+        memset(log1, 0, sizeof(log1));
+        snprintf(log1, sizeof(log1), "1\n");
+        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
+    }
+    else
+    {
+        char log1[128];
+        memset(log1, 0, sizeof(log1));
+        snprintf(log1, sizeof(log1), "2\n");
+        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
+    }
+
 }
 
 uint8_t i2c_reg_write( uint8_t device_addr, uint8_t reg, uint8_t value )
@@ -69,10 +84,6 @@ uint8_t i2c_reg_write( uint8_t device_addr, uint8_t reg, uint8_t value )
     status = HAL_I2C_Master_Transmit(&th_iic, device_addr, TxData, 2, 1000);
     if(status != HAL_OK)
     {
-        char log[128];
-        memset(log, 0, sizeof(log));
-        snprintf(log, sizeof(log), "write is not ok,%d\n", status);
-        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
     }
     return status;
 }
@@ -95,13 +106,25 @@ uint8_t i2c_reg_read_hmc( uint8_t device_addr, uint8_t reg) //len =  6
 
     if((status1 != HAL_OK) || (status2 != HAL_OK))
     {
-        char log[128];
-        memset(log, 0, sizeof(log));
-        snprintf(log, sizeof(log), "read is not ok,%d,%d\n", status1, status2);
-        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
     }
     return (status1 | status2);
 }
+
+uint8_t i2c_reg_read( uint8_t device_addr, uint8_t reg, uint8_t *value )
+{
+    uint8_t status1 = HAL_OK, status2 = HAL_OK;
+    static uint8_t  msg[1];
+    uint8_t value_read[2];
+    msg[0] = reg;
+
+    status1 = HAL_I2C_Master_Transmit(&th_iic, device_addr, msg, 1, 1000);
+    status2 = HAL_I2C_Master_Receive(&th_iic, device_addr, value_read, 1, 1000);
+
+    *value = value_read[0];
+    if((status1 != HAL_OK) || (status2 != HAL_OK)) {}
+    return (status1 | status2);
+}
+
 
 void SHT20_rest(void)
 {
@@ -112,33 +135,8 @@ void SHT20_rest(void)
     HAL_Delay(6);
     if(status != HAL_OK)
     {
-        char log[128];
-        memset(log, 0, sizeof(log));
-        snprintf(log, sizeof(log), "rest is not ok\n", status);
-        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
     }
 }
-
-
-float SHT20_humidityRH_cal(uint16_t dat)
-{
-    float humidityRH;
-    dat &= ~0x0003;
-
-    humidityRH = -6.0 + 125.0 / 65536 * (float)dat;
-    return humidityRH;
-}
-
-float SHT20_temperatureC_cal(uint16_t dat)
-{
-    float temperatureC;
-    dat &= ~0x0003;
-    temperatureC = -46.85 + 175.72 / 65536 * (float)dat;
-    return temperatureC;
-}
-
-extern double TemRet;
-extern double HumRet;
 
 void SHT20_test(void)
 {
@@ -164,13 +162,13 @@ void SHT20_test(void)
         char log1[128];
         memset(log1, 0, sizeof(log1));
         snprintf(log1, sizeof(log1), "x is %d\n", x);
-        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
+        //    los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
         HAL_Delay(100);
 
         memset(log, 0, sizeof(log));
         //snprintf(log, sizeof(log), "x is %d,y is %d,z is %d\n",x,y,z);
         snprintf(log, sizeof(log), "x0 is %x,x1 is %x\n", BUF[0], BUF[1]);
-        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+        // los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
         HAL_Delay(1200);
     }
 }

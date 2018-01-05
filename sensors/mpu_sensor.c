@@ -387,6 +387,11 @@ uint8_t MPU6050_I2C_Wait_Ack(void)
         ucErrTime++;
         if(ucErrTime > 250)
         {
+
+            char log[128];
+            memset(log, 0, sizeof(log));
+            snprintf(log, sizeof(log), "ack\n");
+            los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
             MPU6050_I2C_Stop();
             return 1;
         }
@@ -527,6 +532,11 @@ void MPU6050_test()
     MPU6050_I2C_Init();
     osDelay(100);
     HMC5983_Initialize();
+
+    char log[128];
+    memset(log, 0, sizeof(log));
+    snprintf(log, sizeof(log), "1\n");
+    los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
 
     while(1)
     {

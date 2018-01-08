@@ -24,8 +24,8 @@ extern "C" {
 
 #include "stm32l4xx_hal.h"
 
-#define  SHT20_WRITE_ADDRESS		0x3C
-#define	 SHT20_READ_ADDRESS			0x3D
+#define  SHT20_WRITE_ADDRESS		0x60
+#define	 SHT20_READ_ADDRESS			0x61
 extern uint16_t  POLYNOMIAL ;
 
 typedef enum
@@ -81,7 +81,7 @@ float SHT20_humidityRH_cal(uint16_t dat);
 
 float SHT20_temperatureC_cal(uint16_t dat);
 
-void SHT20_test(void);
+void mmc_test(void);
 
 #ifdef __cplusplus
 extern "C" {

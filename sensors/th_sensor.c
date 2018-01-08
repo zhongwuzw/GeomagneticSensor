@@ -1,5 +1,6 @@
 #include "th_sensor.h"
 #include "uart_test.h"
+#include "mmc_sensor.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -57,21 +58,6 @@ void th_iic_Init(void)
         _IIC_Error_Handler(__FILE__, __LINE__);
     }
 
-    if (HAL_I2C_IsDeviceReady(&th_iic, 0x60, 1000, 1000) != HAL_OK)
-    {
-        char log1[128];
-        memset(log1, 0, sizeof(log1));
-        snprintf(log1, sizeof(log1), "1\n");
-        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
-    }
-    else
-    {
-        char log1[128];
-        memset(log1, 0, sizeof(log1));
-        snprintf(log1, sizeof(log1), "2\n");
-        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
-    }
-
 }
 
 uint8_t i2c_reg_write( uint8_t device_addr, uint8_t reg, uint8_t value )
@@ -84,30 +70,13 @@ uint8_t i2c_reg_write( uint8_t device_addr, uint8_t reg, uint8_t value )
     status = HAL_I2C_Master_Transmit(&th_iic, device_addr, TxData, 2, 1000);
     if(status != HAL_OK)
     {
+        char log1[128];
+        memset(log1, 0, sizeof(log1));
+        snprintf(log1, sizeof(log1), "3\n");
+        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
+        osDelay(100);
     }
     return status;
-}
-
-uint8_t i2c_reg_read_hmc( uint8_t device_addr, uint8_t reg) //len =  6
-{
-    uint8_t status1 = HAL_OK, status2 = HAL_OK;
-    static uint8_t  msg[1];
-    uint8_t value_read[8] = {0};
-    msg[0] = reg;
-
-    status1 = HAL_I2C_Master_Transmit(&th_iic, device_addr, msg, 1, 1000);
-    status2 = HAL_I2C_Master_Receive(&th_iic, device_addr, value_read, 6, 1000);
-
-    int i = 0;
-    for (i = 0; i < 6; i++)
-    {
-        BUF[i] = value_read[i];
-    }
-
-    if((status1 != HAL_OK) || (status2 != HAL_OK))
-    {
-    }
-    return (status1 | status2);
 }
 
 uint8_t i2c_reg_read( uint8_t device_addr, uint8_t reg, uint8_t *value )
@@ -121,7 +90,14 @@ uint8_t i2c_reg_read( uint8_t device_addr, uint8_t reg, uint8_t *value )
     status2 = HAL_I2C_Master_Receive(&th_iic, device_addr, value_read, 1, 1000);
 
     *value = value_read[0];
-    if((status1 != HAL_OK) || (status2 != HAL_OK)) {}
+    if((status1 != HAL_OK) || (status2 != HAL_OK))
+    {
+        char log1[128];
+        memset(log1, 0, sizeof(log1));
+        snprintf(log1, sizeof(log1), "4\n");
+        los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
+        osDelay(100);
+    }
     return (status1 | status2);
 }
 
@@ -138,37 +114,97 @@ void SHT20_rest(void)
     }
 }
 
-void SHT20_test(void)
+/***************************************************************************//**
+ * @brief
+ *   mmc3316xmt（RESET-SET）获取数据，磁化、测量、读取
+ *   时序：RESET - 60ms - SET - 60ms - Take Measure - 查询采集
+ *
+ * @param[in]
+ *   null.
+ *
+ * @return
+ *   null.
+ ******************************************************************************/
+bool mmc3260AcqData (void)
+{
+    uint8_t AMRState;
+
+    // 向内部寄存器INTERNAL_CONTROL0写入一个字节的测试启动指令TAKE_MEASUREMENT
+    if (i2c_reg_write(SHT20_WRITE_ADDRESS, INTERNAL_CONTROL0, TAKE_MEASUREMENT) != 0)
+    {
+        char log[128];
+        memset(log, 0, sizeof(log));
+        snprintf(log, sizeof(log), "w\n");
+        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+        return false;
+    }
+    osDelay(15);
+    // 从寄存器MMC_STATUS中读取一个字节的数据赋值给AMRState
+    uint8_t status;
+    if (i2c_reg_read( SHT20_READ_ADDRESS, MMC_STATUS, &status ) != 0)
+    {
+        return false;
+    }
+    else
+    {
+			return true;
+			        char log[128];
+        memset(log, 0, sizeof(log));
+        snprintf(log, sizeof(log), "7\n");
+        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+        if (!(AMRState & 0x01))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void mmc_test(void)
 {
     char log[128];
-    uint16_t data[2] = {0};
-    uint16_t hum = 0;
 
-    SHT20_rest();
-    osDelay(1000);
+    memset(log, 0, sizeof(log));
+    snprintf(log, sizeof(log), "6\n");
+    los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+    HAL_Delay(1200);
 
     while(1)
     {
-        i2c_reg_read_hmc(SHT20_READ_ADDRESS, 0x06);
-        i2c_reg_write(SHT20_WRITE_ADDRESS, 0x03, 0x00);
-        //float x = BUF[1] << 8 | BUF[0];
-        //	float y = BUF[3] << 8 | BUF[2];
-        //		float z = BUF[5] << 8 | BUF[4];
+        if (mmc3260AcqData())
+        {
+            // 从slave内部地址XOUT_LOW开始，连续读取6个字节到寄存器AMR_3260_XYZ_Register中
+            uint8_t x_low;
+            i2c_reg_read( SHT20_READ_ADDRESS, 0x00, &x_low );
+            uint8_t x_high;
+            i2c_reg_read( SHT20_READ_ADDRESS, 0x01, &x_high );
+            uint8_t y_low;
+            i2c_reg_read( SHT20_READ_ADDRESS, 0x02, &y_low );
 
-        short x = BUF[0] << 8 | BUF[1];
-        short y = BUF[2] << 8 | BUF[3];
-        short z = BUF[4] << 8 | BUF[5];
+            uint8_t y_high;
+            i2c_reg_read( SHT20_READ_ADDRESS, 0x03, &y_high );
+            uint8_t z_low;
+            i2c_reg_read( SHT20_READ_ADDRESS, 0x04, &z_low );
 
-        char log1[128];
-        memset(log1, 0, sizeof(log1));
-        snprintf(log1, sizeof(log1), "x is %d\n", x);
-        //    los_dev_uart_write(LOS_STM32L476_UART3, log1, sizeof(log1), 1000);
-        HAL_Delay(100);
+            uint8_t z_high;
+            i2c_reg_read( SHT20_READ_ADDRESS, 0x05, &z_high );
 
-        memset(log, 0, sizeof(log));
-        //snprintf(log, sizeof(log), "x is %d,y is %d,z is %d\n",x,y,z);
-        snprintf(log, sizeof(log), "x0 is %x,x1 is %x\n", BUF[0], BUF[1]);
-        // los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
-        HAL_Delay(1200);
+
+            short x = (x_high & 0x3F) << 8 | x_low;
+            short y = (y_high & 0x3F) << 8 | y_low;
+            short z = (z_high & 0x3F) << 8 | z_low;
+
+            memset(log, 0, sizeof(log));
+            snprintf(log, sizeof(log), "x is %d,y is %d,z is %d\n", x, y, z);
+            los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+            HAL_Delay(1200);
+        }
+        else
+        {
+            memset(log, 0, sizeof(log));
+            snprintf(log, sizeof(log), "5\n");
+            los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+            HAL_Delay(1200);
+        }
     }
 }

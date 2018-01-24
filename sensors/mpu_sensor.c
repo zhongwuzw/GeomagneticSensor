@@ -568,7 +568,7 @@ void MPU6050_test()
 
         char log[128];
         memset(log, 0, sizeof(log));
-        snprintf(log, sizeof(log), "x is %.2f,y is %.2f,z is %.2f\n", scale_x, scale_y, scale_z);
+        snprintf(log, sizeof(log), "%.2f,%.2f,%.2f\n", scale_x, scale_y, scale_z);
         los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
 
         // reset register to 0x03

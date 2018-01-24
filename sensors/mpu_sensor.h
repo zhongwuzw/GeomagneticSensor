@@ -396,7 +396,7 @@ extern "C" {
 
 
 void MPU6050_Initialize();
-void HMC5983_Initialize();
+void MAG3110_Initialize();
 bool MPU6050_TestConnection();
 
 // GYRO_CONFIG register

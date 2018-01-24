@@ -425,7 +425,7 @@ int main(void)
 	}
 	
 	/*初始化硬件I2C，该I2C用于获取温湿度传感器的数据*/
-	th_iic_Init();
+	//th_iic_Init();
 	
 	/*初始化按键，该按键用于控制LED灯的状态*/
 	//KEY_init();
@@ -451,13 +451,13 @@ int main(void)
 	osThreadCreate(&nbiot_thread, NULL);
   */
 	
+	/*
 	thsensor_thread.name = "TH_Sensor";
 	thsensor_thread.stacksize = 2048;
 	thsensor_thread.tpriority = osPriorityLow;
 	thsensor_thread.pthread = (os_pthread)SHT20_test;                  //温湿度测试函数
 	osThreadCreate(&thsensor_thread, NULL);
-	
-	/*
+
 	led_thread.name = "Test_LED";
 	led_thread.stacksize = 2048;
 	led_thread.tpriority = osPriorityLow;
@@ -470,13 +470,12 @@ int main(void)
 	ultra_thread.pthread = (os_pthread)ultra_test;                         //LED灯闪烁函数
 	osThreadCreate(&ultra_thread, NULL);
 	*/
-	/*
+
 	mpu_thread.name = "Test_MPU6050";
 	mpu_thread.stacksize = 2048;
 	mpu_thread.tpriority = osPriorityLow;
 	mpu_thread.pthread = (os_pthread)MPU6050_test;                     //六轴传感器函数
 	osThreadCreate(&mpu_thread, NULL);
-	*/
 	
 /*
 	mmc_3260_thread.name = "MMC_3260";

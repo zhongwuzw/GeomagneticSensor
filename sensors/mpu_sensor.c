@@ -52,21 +52,21 @@ void MPU6050_Initialize()
     MPU6050_SetSleepModeStatus(DISABLE);
 }
 
-void HMC5983_Initialize()
+void MAG3110_Initialize()
 {
-    // 8-average, 15Hz default, normal measurement
-    uint8_t option_for_0 = 0x70;
-    uint8_t status = MPU6050_I2C_ByteWrite(0x1E, &option_for_0, 0x00);
+    // Automatic magnetic seonsor resets enabled
+    uint8_t option_for_0 = 0x80;
+    MPU6050_I2C_ByteWrite(0x1C, &option_for_0, 0x11);
     osDelay(100);
 
-    // Gain = 5
-    uint8_t option_for_1 = 0xA0;
-    MPU6050_I2C_ByteWrite(0x1E, &option_for_1, 0x01);
+    // 80Hz, sample 16, stand-by mode to write register
+    uint8_t option_for_1 = 0x00;
+    MPU6050_I2C_ByteWrite(0x1C, &option_for_1, 0x10);
     osDelay(100);
 
-    // Continuous-measurement mode
-    uint8_t option_for_2 = 0x00;
-    MPU6050_I2C_ByteWrite(0x1E, &option_for_2, 0x02);
+    // Active mode
+    uint8_t option_for_2 = option_for_1 + 1;
+    MPU6050_I2C_ByteWrite(0x1E, &option_for_2, 0x10);
     osDelay(100);
 }
 
@@ -531,50 +531,42 @@ void MPU6050_test()
 {
     MPU6050_I2C_Init();
     osDelay(100);
-    HMC5983_Initialize();
-
-    char log[128];
-    memset(log, 0, sizeof(log));
-    snprintf(log, sizeof(log), "1\n");
-    los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
+    MAG3110_Initialize();
 
     while(1)
     {
         osDelay(100);
+        uint8_t status = 0;
+        MPU6050_I2C_BufferRead(0x3D, &status, 0x00, 1);
+        if (status & 0x08)
+        {
+            // read x,y,z from register
+            uint8_t x_msb = 0;
+            MPU6050_I2C_BufferRead(0x3D, &x_msb, 0x01, 1);
+            uint8_t x_lsb = 0;
+            MPU6050_I2C_BufferRead(0x3D, &x_lsb, 0x02, 1);
 
-        // read x,y,z from register
-        uint8_t x_msb = 0;
-        MPU6050_I2C_BufferRead(0x1E, &x_msb, 0x03, 1);
-        uint8_t x_lsb = 0;
-        MPU6050_I2C_BufferRead(0x1E, &x_lsb, 0x04, 1);
+            uint8_t y_msb = 0;
+            MPU6050_I2C_BufferRead(0x3D, &y_msb, 0x03, 1);
+            uint8_t y_lsb = 0;
+            MPU6050_I2C_BufferRead(0x3D, &y_lsb, 0x04, 1);
 
-        uint8_t y_msb = 0;
-        MPU6050_I2C_BufferRead(0x1E, &y_msb, 0x07, 1);
-        uint8_t y_lsb = 0;
-        MPU6050_I2C_BufferRead(0x1E, &y_lsb, 0x08, 1);
+            uint8_t z_msb = 0;
+            MPU6050_I2C_BufferRead(0x3D, &z_msb, 0x05, 1);
+            uint8_t z_lsb = 0;
+            MPU6050_I2C_BufferRead(0x3D, &z_lsb, 0x06, 1);
 
-        uint8_t z_msb = 0;
-        MPU6050_I2C_BufferRead(0x1E, &z_msb, 0x05, 1);
-        uint8_t z_lsb = 0;
-        MPU6050_I2C_BufferRead(0x1E, &z_lsb, 0x06, 1);
+            short x = x_msb << 8 | x_lsb;
+            short y = y_msb << 8 | y_lsb;
+            short z = z_msb << 8 | z_lsb;
 
-        short x = x_msb << 8 | x_lsb;
-        short y = y_msb << 8 | y_lsb;
-        short z = z_msb << 8 | z_lsb;
+            char log[128];
+            memset(log, 0, sizeof(log));
+            snprintf(log, sizeof(log), "%d,%d,%d\n", x, y, z);
+            los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
 
-        float scale_x = x * 0.92;
-        float scale_y = y * 0.92;
-        float scale_z = z * 0.92;
-
-        char log[128];
-        memset(log, 0, sizeof(log));
-        snprintf(log, sizeof(log), "%.2f,%.2f,%.2f\n", scale_x, scale_y, scale_z);
-        los_dev_uart_write(LOS_STM32L476_UART3, log, sizeof(log), 1000);
-
-        // reset register to 0x03
-        uint8_t rebaseRegisterAddr = 0x00;
-        MPU6050_I2C_ByteWrite(0x1E, &rebaseRegisterAddr, 0x03);
-        osDelay(1000);
+            osDelay(1000);
+        }
     }
 }
 /**
